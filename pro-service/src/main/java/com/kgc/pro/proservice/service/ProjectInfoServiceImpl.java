@@ -40,8 +40,10 @@ public class ProjectInfoServiceImpl implements ProjectInfoService {
         List<ProjectInfo> list=new ArrayList<>();
         SearchSourceBuilder searchSourceBuilder=new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder=new BoolQueryBuilder();
-        MatchQueryBuilder matchQueryBuilder=new MatchQueryBuilder("status",status);
-        boolQueryBuilder.must(matchQueryBuilder);
+        if(status!=3){
+            MatchQueryBuilder matchQueryBuilder=new MatchQueryBuilder("status",status);
+            boolQueryBuilder.must(matchQueryBuilder);
+        }
         searchSourceBuilder.query(boolQueryBuilder);
         String dsl=searchSourceBuilder.toString();
         Search search=new Search.Builder(dsl).addIndex("project").addType("projectinfo").build();
@@ -62,8 +64,10 @@ public class ProjectInfoServiceImpl implements ProjectInfoService {
         List<ProjectInfo> list=new ArrayList<>();
         SearchSourceBuilder searchSourceBuilder=new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder=new BoolQueryBuilder();
-        MatchQueryBuilder matchQueryBuilder=new MatchQueryBuilder("status",status);
-        boolQueryBuilder.must(matchQueryBuilder);
+        if(status!=3){
+            MatchQueryBuilder matchQueryBuilder=new MatchQueryBuilder("status",status);
+            boolQueryBuilder.must(matchQueryBuilder);
+        }
         searchSourceBuilder.from((pageNum-1)*pageSize);
         searchSourceBuilder.size(pageSize);
         searchSourceBuilder.query(boolQueryBuilder);
@@ -132,7 +136,7 @@ public class ProjectInfoServiceImpl implements ProjectInfoService {
             Random random=new Random();
             int i = random.nextInt(10);
             jedis.setex(prokey,i*60*10,JSON.toJSONString(projectInfo));
-            
+            this.setEs();
         }
         return 0;
     }

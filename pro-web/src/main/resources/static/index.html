@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="vuebox">
+    <div class="container">
+        <div :class="{hidden:selecttype!=0}">
+            <!--申报状态-->
+            <div class="row">
+                <div class="col-lg-4 col-lg-offset-2">
+                    申报状态<select v-model="statype">
+                    <option value="3">请选择</option>
+                    <option value="0">已申报</option>
+                    <option value="1">审核中</option>
+                    <option value="2">已审核</option>
+                </select>
+                    <button type="button" @click="clickq()">查询</button>
+                </div>
+            </div>
+            <!--数据列表-->
+            <div class="row">
+                <div class="center-block text-center">
+                    <h2>申报项目列表</h2>
+
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>项目编号</td>
+                            <td>项目名称</td>
+                            <td>申报开始日期</td>
+                            <td>申报结束日期</td>
+                            <td>申报状态</td>
+                            <td>操作</td>
+                        </tr>
+                        <tr v-for="item in projectlist.pageinfo">
+                            <td>{{item.id}}</td>
+                            <td>{{item.projectname}}</td>
+                            <td>{{item.startdate}}</td>
+                            <td>{{item.enddate}}</td>
+                            <td><b v-if="item.status==0">已申报</b>
+                                <b v-if="item.status==1">审核中</b>
+                                <b v-if="item.status==2">已审核</b>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0)" @click="examine(item.id)" v-if="item.status!=2">审核</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <!--页面跳转-->
+            <div class="row">
+                <div class="navbar-right">
+                    <a href="javascript:void(0)" @click="indexpage()">首页</a>
+                    <a v-show="projectlist.hasPrePage" href="javascript:void(0)" @click="prev()">上一页</a>
+                    <a v-show="projectlist.hasNextPage" href="javascript:void(0)" @click="next()">下一页</a>
+                    <span>第<b>{{pageNum}}</b>/<b>{{projectlist.pages}}</b></span>
+                </div>
+            </div>
+        </div>
+        <div :class="{hidden:selecttype==0}">
+            <div class="text-center">
+                <div class="row">
+                    <div class="col-lg-12 panel-title">
+                        <h2>申报项目信息</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4 col-lg-push-2">
+                        项目编号
+                    </div>
+                    <div class="col-lg-8">
+                        {{projectinfo.id}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4 col-lg-push-2">
+                        项目名称
+                    </div>
+                    <div class="col-lg-8">
+                        {{projectinfo.projectname}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4 col-lg-push-2">
+                        申报开始日期
+                    </div>
+                    <div class="col-lg-8">
+                        {{projectinfo.startdate}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4 col-lg-push-2">
+                        申报结束日期
+                    </div>
+                    <div class="col-lg-8">
+                        {{projectinfo.enddate}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-4 col-lg-push-2">
+                        申报状态
+                    </div>
+                    <div class="col-lg-8">
+                        <select v-model="projectinfo.status">
+                            <option value="0">已申报</option>
+                            <option value="1">审核中</option>
+                            <option value="2">已审核</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <button type="button" @click="save()">审核</button>
+                    <button type="button" @click="back()">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+<script type="text/javascript">
+    var vm=new Vue({
+        el:"#vuebox",
+        data:{
+            selecttype:0,
+            statype:3,
+            pageNum:1,
+            pageSize:2,
+            projectlist:[],
+            projectinfo:{id:0,projectname:null,startdate:null,enddate:null,status:null}
+        },
+        mounted(){
+            this.querylist();
+        },
+        methods:{
+            querylist:function () {
+                axios({url:"/pro/list", method:"post",
+                    params:{status:this.statype,pageNum:this.pageNum,pageSize:this.pageSize}})
+                    .then(res=>{this.projectlist=res.data});
+            },
+            examine:function (id) {
+                axios({url:"/pro/by/id", method:"post",
+                    params:{id:id}})
+                    .then(res=>{this.projectinfo=res.data});
+                this.selecttype=1;
+            },
+            clickq:function () {
+                this.querylist();
+                this.pageNum=1;
+            },
+            prev:function () {//上一页
+                this.pageNum +=-1;
+                this.querylist();
+            },
+            next:function () {//下一页
+                this.pageNum+=+1;
+                this.querylist();
+            },
+            indexpage:function () {//回首页
+                this.pageNum=1;
+                this.querylist();
+            },
+            save:function () {
+                axios.post("/save",this.projectinfo).then(res=>{
+                    if(res.data!=null){
+                        alert("审核成功!");
+                        this.projectinfo={id:0,projectname:null,startdate:null,enddate:null,status:null}
+                        this.querylist();
+                        this.selecttype=0;
+                    }else{
+                        alert("审核失败!");
+                    }
+                })
+            },
+            back:function () {
+                this.projectinfo={id:0,projectname:null,startdate:null,enddate:null,status:null}
+                this.selecttype=0;
+            }
+        }
+    })
+</script>
